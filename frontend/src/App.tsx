@@ -1,6 +1,7 @@
 import { Routes, Route } from "react-router-dom";
 import { UploadZone } from "./components/UploadZone";
 import { Dashboard } from "./components/Dashboard";
+import { Sidebar } from "./components/Sidebar";
 import './App.css';
 
 function Home() {
@@ -19,10 +20,15 @@ function Home() {
 
 function App() {
   return (
-    <Routes>
-      <Route path="/" element={<Home />} />
-      <Route path="/dashboard/:jobId" element={<Dashboard />} />
-    </Routes>
+    <div className="app-layout">
+      <Sidebar />
+      <div className="main-content">
+        <Routes>
+          <Route path="/" element={<Home />} />
+          <Route path="/dashboard/:jobId" element={<Dashboard />} />
+        </Routes>
+      </div>
+    </div>
   );
 }
 

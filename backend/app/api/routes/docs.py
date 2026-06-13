@@ -58,3 +58,7 @@ def get_job_status(job_id: str, repo: JobRepository = Depends(get_job_repo)):
     if not job:
         raise HTTPException(status_code=404, detail="Job not found")
     return job
+
+@router.get("/jobs")
+def get_jobs_history(repo: JobRepository = Depends(get_job_repo)):
+    return repo.get_all_jobs()

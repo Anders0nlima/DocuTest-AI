@@ -39,3 +39,8 @@ class JobRepository:
         if not response.data:
             return None
         return response.data[0]
+
+    def get_all_jobs(self) -> list[Dict[str, Any]]:
+        """Retrieves all jobs, ordered by creation date descending."""
+        response = self.db.table("jobs").select("id, filename, status, created_at").order("created_at", desc=True).execute()
+        return response.data

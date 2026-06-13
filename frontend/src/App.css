@@ -131,3 +131,17 @@
   border-color: var(--primary-color);
   color: #a5b4fc;
 }
+
+/* Sidebar Layout */
+.app-layout {
+  display: flex;
+  min-height: 100vh;
+}
+
+.main-content {
+  flex: 1;
+  margin-left: 280px;
+  display: flex;
+  flex-direction: column;
+  padding: 2rem;
+}
