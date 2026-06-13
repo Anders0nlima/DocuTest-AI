@@ -5,6 +5,7 @@ class Settings(BaseSettings):
     API_V1_STR: str = "/api/v1"
     SUPABASE_URL: str = ""
     SUPABASE_KEY: str = ""
+    GEMINI_API_KEY: str = ""
 
     class Config:
         env_file = ".env"
