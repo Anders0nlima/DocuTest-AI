@@ -3,6 +3,12 @@ from app.schemas.generation import GenerationResult, TestSuite, SecurityInsight
 from google import genai
 from google.genai import types
 from app.core.config import settings
+import logging
+import time
+from pydantic import ValidationError
+
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
 
 class AIGeneratorProvider(ABC):
     @abstractmethod
@@ -69,16 +75,44 @@ class RealAIGeneratorProvider(AIGeneratorProvider):
 
         prompt = f"Analyze the following code and return the requested JSON structure.\n\nCode:\n{code_content}"
         
-        response = await self.client.aio.models.generate_content(
-            model=self.model_name,
-            contents=prompt,
-            config=types.GenerateContentConfig(
-                system_instruction=system_instruction,
-                response_mime_type="application/json",
-                response_schema=GenerationResult,
-            ),
-        )
-        return GenerationResult.model_validate_json(response.text)
+        start_time = time.time()
+        logger.info(f"Starting LLM generation using model: {self.model_name}")
+
+        try:
+            response = await self.client.aio.models.generate_content(
+                model=self.model_name,
+                contents=prompt,
+                config=types.GenerateContentConfig(
+                    system_instruction=system_instruction,
+                    response_mime_type="application/json",
+                    response_schema=GenerationResult,
+                ),
+            )
+        except Exception as e:
+            logger.error(f"LLM Generation API Failed: {str(e)}")
+            raise Exception("Failed to communicate with the AI provider.") from e
+
+        elapsed_time = time.time() - start_time
+        
+        # Observability logging for Token usage
+        usage = getattr(response, 'usage_metadata', None)
+        if usage:
+            logger.info(
+                f"LLM completed in {elapsed_time:.2f}s | "
+                f"Tokens: {getattr(usage, 'prompt_token_count', 0)} prompt + "
+                f"{getattr(usage, 'candidates_token_count', 0)} completion = "
+                f"{getattr(usage, 'total_token_count', 0)} total"
+            )
+        else:
+            logger.info(f"LLM completed in {elapsed_time:.2f}s (No token usage data available)")
+
+        # Schema validation with error tracking
+        try:
+            return GenerationResult.model_validate_json(response.text)
+        except ValidationError as ve:
+            logger.error(f"LLM Output Schema Validation Failed: {str(ve)}")
+            logger.error(f"Raw Output: {response.text}")
+            raise Exception("AI generated an invalid response format. Please try again.") from ve
 
 # Dependency injection factory
 def get_llm_provider() -> AIGeneratorProvider:
