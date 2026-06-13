@@ -1,4 +1,4 @@
-from fastapi import APIRouter, UploadFile, File, HTTPException, Depends
+from fastapi import APIRouter, UploadFile, File, HTTPException, Depends, BackgroundTasks
 from app.services.parser import SourceCodeParser
 from app.repositories.job_repository import JobRepository
 from app.core.db import get_supabase
@@ -10,8 +10,17 @@ router = APIRouter()
 def get_job_repo():
     return JobRepository(get_supabase())
 
+async def process_code_analysis(job_id: str, sanitized_code: str, repo: JobRepository, llm: AIGeneratorProvider):
+    """Background task to call LLM and update DB without blocking the HTTP request."""
+    try:
+        result = await llm.generate(sanitized_code)
+        repo.update_job_success(job_id, result)
+    except Exception as e:
+        repo.update_job_failure(job_id, str(e))
+
 @router.post("/analyze")
 async def analyze_file(
+    background_tasks: BackgroundTasks,
     file: UploadFile = File(...), 
     repo: JobRepository = Depends(get_job_repo),
     llm: AIGeneratorProvider = Depends(get_llm_provider)
@@ -34,19 +43,13 @@ async def analyze_file(
     # 1. Persist as PENDING in Database
     job_id = repo.create_job(file.filename, sanitized_code)
     
-    # 2. Orchestrate AI Generation
-    try:
-        result = await llm.generate(sanitized_code)
-        # 3. Update Database to COMPLETED
-        repo.update_job_success(job_id, result)
-    except Exception as e:
-        # 4. Update Database to FAILED on errors
-        repo.update_job_failure(job_id, str(e))
+    # 2. Orchestrate AI Generation in Background
+    background_tasks.add_task(process_code_analysis, job_id, sanitized_code, repo, llm)
     
     return {
         "job_id": job_id,
-        "status": "PROCESSED",
-        "message": "Job processed successfully."
+        "status": "PENDING",
+        "message": "Job created successfully. It will be processed in the background."
     }
 
 @router.get("/jobs/{job_id}", response_model=JobResponse)
