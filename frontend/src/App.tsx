@@ -1,5 +1,6 @@
-import { Routes, Route, useParams } from "react-router-dom";
+import { Routes, Route } from "react-router-dom";
 import { UploadZone } from "./components/UploadZone";
+import { Dashboard } from "./components/Dashboard";
 import './App.css';
 
 function Home() {
@@ -12,17 +13,6 @@ function Home() {
       </p>
       
       <UploadZone />
-    </div>
-  );
-}
-
-// Placeholder for Step 15 & 16
-function Dashboard() {
-  const { jobId } = useParams();
-  return (
-    <div className="glass-panel" style={{ padding: '2rem', marginTop: '2rem' }}>
-      <h2 style={{ color: '#a5b4fc', fontSize: '1.5rem', marginBottom: '1rem' }}>Dashboard Area</h2>
-      <p style={{ color: '#94a3b8' }}>Viewing analysis results for Job ID: {jobId}</p>
     </div>
   );
 }
