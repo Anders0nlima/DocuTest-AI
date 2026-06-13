@@ -20,7 +20,7 @@ class JobResponse(JobBase):
     status: JobStatus
     created_at: datetime
     result: Optional[GenerationResult] = None
-    error: Optional[str] = None
+    error_message: Optional[str] = None
 
     class Config:
         from_attributes = True

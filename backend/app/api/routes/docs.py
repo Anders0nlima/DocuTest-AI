@@ -1,10 +1,16 @@
-from fastapi import APIRouter, UploadFile, File, HTTPException
+from fastapi import APIRouter, UploadFile, File, HTTPException, Depends
 from app.services.parser import SourceCodeParser
+from app.repositories.job_repository import JobRepository
+from app.core.db import get_supabase
+from app.schemas.job import JobResponse
 
 router = APIRouter()
 
+def get_job_repo():
+    return JobRepository(get_supabase())
+
 @router.post("/analyze")
-async def analyze_file(file: UploadFile = File(...)):
+async def analyze_file(file: UploadFile = File(...), repo: JobRepository = Depends(get_job_repo)):
     if not file.filename.endswith((".py", ".js", ".ts")):
         raise HTTPException(
             status_code=400, 
@@ -19,9 +25,18 @@ async def analyze_file(file: UploadFile = File(...)):
     
     parsed_data = SourceCodeParser.parse(text_content)
     
-    # Temporarily returning parsed data for testing step 5
-    # Later this will dispatch to the DB and background task
+    # Persist as PENDING in Database
+    job_id = repo.create_job(file.filename, parsed_data["sanitized_content"])
+    
     return {
-        "filename": file.filename,
-        "parsed": parsed_data
+        "job_id": job_id,
+        "status": "PENDING",
+        "message": "Job created successfully. It will be processed shortly."
     }
+
+@router.get("/jobs/{job_id}", response_model=JobResponse)
+def get_job_status(job_id: str, repo: JobRepository = Depends(get_job_repo)):
+    job = repo.get_job(job_id)
+    if not job:
+        raise HTTPException(status_code=404, detail="Job not found")
+    return job
