@@ -1,12 +1,13 @@
 from pydantic import BaseModel, Field
-from typing import List, Dict, Any
+from typing import List, Dict, Any, Optional
 
 class TestSuite(BaseModel):
-    filename: str = Field(..., description="Name of the generated test file")
+    filename: str = Field(default="test_generated.py", description="Name of the generated test file")
+    framework: str = Field(default="pytest", description="Test framework used")
     code: str = Field(..., description="The actual test code")
 
 class SecurityInsight(BaseModel):
-    route: str = Field(..., description="The vulnerable or checked route path")
+    route: str = Field(default="general", description="The vulnerable or checked route path")
     issue: str = Field(..., description="Description of the security validation issue")
 
 class GenerationResult(BaseModel):
