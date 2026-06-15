@@ -1,0 +1,23 @@
+services:
+  - type: web
+    name: docutest-ai-api
+    env: docker
+    region: ohio
+    plan: free
+    rootDir: backend
+    dockerfilePath: ./Dockerfile
+    envVars:
+      - key: PROJECT_NAME
+        value: "DocuTest AI API"
+      - key: API_V1_STR
+        value: "/api/v1"
+      - key: ENVIRONMENT
+        value: "production"
+      - key: FRONTEND_URL
+        sync: false
+      - key: GEMINI_API_KEY
+        sync: false
+      - key: SUPABASE_URL
+        sync: false
+      - key: SUPABASE_KEY
+        sync: false

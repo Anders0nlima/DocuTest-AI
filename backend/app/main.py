@@ -8,10 +8,14 @@ app = FastAPI(
     openapi_url=f"{settings.API_V1_STR}/openapi.json"
 )
 
+# Parse comma-separated list of origins from .env
+raw_origins = settings.FRONTEND_URL.split(",")
+allowed_origins = [origin.strip() for origin in raw_origins if origin.strip()]
+
 # CORS - Allow frontend to communicate with backend
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=[settings.FRONTEND_URL],
+    allow_origins=allowed_origins,
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
