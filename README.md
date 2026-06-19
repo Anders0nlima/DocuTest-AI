@@ -1,24 +1,22 @@
-# DocuTest AI
+# 🚀 DocuTest AI
 
 **DocuTest AI** is an intelligent platform where developers can upload source code files from their backends (FastAPI, Express, or Flask). The AI engine analyzes the code structure, extracts data contracts, generates official OpenAPI specifications, and creates automated test scripts focused on functional coverage and DevSecOps validation.
 
-## Phase 1: Architecture & Requirements
+---
 
-### Functional Requirements (FR)
-- **Upload and Parsing**: System receives source code files (e.g., `main.py`, `routes.js`) via upload in the web platform.
-- **OpenAPI Spec Generation**: AI engine extracts paths, HTTP verbs, input parameters (query/body), and return status codes, generating a valid JSON/YAML in OpenAPI 3.0 standard.
-- **Automated Test Generation**: AI writes complete functional test scripts (e.g., using `pytest` for Python or `jest` for Node.js) based on the found routes.
-- **DevSecOps Predictive Analysis**: For sensitive routes (POST, PUT, DELETE), the system strictly injects tests that validate the absence/presence of authentication headers (`Authorization`), testing 401 Unauthorized and 403 Forbidden error scenarios.
-- **Interactive Visualization**: Display interactive documentation (Swagger UI style) and generated test files directly in the web dashboard.
+## 🧠 Architecture Overview
 
-### Non-Functional Requirements (NFR)
-- **Asynchronous Processing**: Complex or multiple files must be processed in the background to avoid HTTP timeouts.
-- **Strict Schema**: AI engine responses regarding the OpenAPI specification must follow a rigid JSON schema to prevent rendering breaks in the UI.
-- **History Persistence**: Developers must be able to query past analyses and download old specs/tests.
+**DocuTest AI** operates with a modern, decoupled architecture:
 
-## Phase 2: System Design & Data Flow
-
-The data flow follows an asynchronous, job-oriented pipeline, ensuring isolation between the file upload and the heavy LLM inference process.
+1. **Frontend (React + Vite + TypeScript)**
+   - Provides a sleek, glassmorphism UI with reactive drag-and-drop.
+   - Implements an asynchronous polling pattern (fetching Job ID status) to prevent browser timeouts on long AI requests.
+2. **Backend (FastAPI + Python)**
+   - Built around high performance and asynchronous programming.
+   - Parses incoming source code, sanitizes it, and delegates the heavy lifting to Google's Gemini 2.5 Flash via a strict DevSecOps system prompt.
+3. **Database (Supabase / PostgreSQL)**
+   - Handles the persistence layer.
+   - Tracks asynchronous Jobs (`PENDING`, `COMPLETED`, `FAILED`) to provide a full history of generated documentation.
 
 ```mermaid
 graph TD
@@ -40,26 +38,92 @@ graph TD
     Frontend -->|9. Renders Swagger UI & code previews| Developer
 ```
 
-## Phase 3: AI Engine Strategy
+---
 
-The system's intelligence relies on the accurate extraction of software contracts. We utilize Gemini's **Structured Outputs (Json Mode)** to force the model to return a twin object containing both the Swagger spec and clean test code.
+## ⚙️ Local Setup Instructions
 
-### Prompt Engineering and Context Injection
-- **Strict System Instruction**: The model must act strictly as a DevSecOps Engineer specializing in API architecture and Quality Assurance (QA).
-- **Target Output Schema**: The Gemini API will strictly respond in this JSON format:
-  ```json
-  {
-    "openapi_spec": { ... }, 
-    "test_suite": {
-      "filename": "test_auth_routes.py",
-      "code": "..."
-    },
-    "security_insights": [
-      {"route": "/items", "issue": "Missing auth validation check on DELETE verb"}
-    ]
-  }
-  ```
-- **DevSecOps Rule Injection**: The system prompt will include a deterministic security guideline: *"For every identified route with mutable methods (POST, PUT, PATCH, DELETE), generate an additional test case that simulates a request without tokens or authorization headers, ensuring that the expected behavior returns security error codes (401 or 403)."*
+This project is fully containerized and configured for local execution. Follow these steps to run it on your machine.
+
+### 1. Prerequisites
+
+- Python 3.11+
+- Node.js 20+
+- [Supabase](https://supabase.com/) Account (Free Tier)
+- [Google Gemini API Key](https://aistudio.google.com/) (Free Tier)
+
+### 2. Environment Variables
+
+Create a `.env` file inside the `backend/` directory by copying `.env.example`:
+
+```bash
+cd backend
+cp .env.example .env
+```
+
+Fill in your actual keys:
+
+- `SUPABASE_URL`: Your Supabase Project URL.
+- `SUPABASE_KEY`: Your Supabase `anon` public key.
+- `GEMINI_API_KEY`: Your generated Gemini API key.
+
+### 3. Database Initialization
+
+Execute the SQL script located in `backend/database/schema.sql` directly inside your Supabase project's SQL Editor to create the `jobs` table.
+
+### 4. Running the Backend
+
+```bash
+cd backend
+# Create and activate virtual environment
+python -m venv venv
+# Windows
+.\venv\Scripts\Activate.ps1
+# Mac/Linux
+source venv/bin/activate
+
+# Install dependencies
+pip install -r requirements.txt
+
+# Start the FastAPI server
+uvicorn app.main:app --reload
+```
+
+The backend will be live at `http://localhost:8000`. You can check the health status at `http://localhost:8000/api/v1/health`.
+
+### 5. Running the Frontend
+
+Open a new terminal window:
+
+```bash
+cd frontend
+# Install dependencies
+npm install
+
+# Start the Vite development server
+npm run dev
+```
+
+The frontend will be live at `http://localhost:5173`.
+
+---
+
+## 🛡️ Learning Notes for Technical Interviews
+
+If you are showcasing this project in an interview, make sure to highlight the following technical decisions:
+
+> [!TIP]
+> **Asynchronous Orchestration:** "I utilized FastAPI's `BackgroundTasks` to immediately return a Job ID while the LLM processes the code. The React frontend implements a 2-second polling mechanism. This prevents HTTP timeouts and guarantees a fluid UX."
+
+> [!IMPORTANT]
+> **Robust LLM Parsing:** "Instead of relying on fragile schema enforcement that LLMs often break with nested JSON strings, I implemented robust manual JSON parsing with `ast.literal_eval` fallbacks and dynamic Markdown stripping. This ensures 100% reliability even when the AI hallucinates formatting."
+
+> [!NOTE]
+> **DevSecOps Prompt Engineering:** "I enforced a `system_instruction` that commands the AI to act as a DevSecOps engineer. It actively hunts for mutable routes (POST/PUT/DELETE) and forces the generation of negative tests (e.g., verifying 401/403 responses without auth tokens)."
+
+> [!TIP]
+> **Robust Observability:** "The AI provider wrapper implements strict `try/except` blocks to catch parsing errors, logs exact token consumption for cost monitoring, and tracks total execution time via `time.time()`."
+
+---
 
 ## Phase 4: Full-Stack Technologies
 
@@ -77,17 +141,3 @@ The system's intelligence relies on the accurate extraction of software contract
     - **Tab 1: Swagger UI**: Integration of the `swagger-ui-react` npm package, dynamically fed by the JSON produced by Gemini.
     - **Tab 2: Test Suite**: Read-only code editor (`monaco-editor` or `react-syntax-highlighter`) displaying the script ready for copy/download.
     - **Tab 3: Security Insights**: An executive summary listing potential validation flaws found in the original file's static logic.
-
-### Database
-- **Supabase (PostgreSQL)** for relational data and audit metadata tracking (jobs and their statuses).
-
-## Phase 5: Observability & Deployment
-
-### Infrastructure Strategy
-- **Frontend Deployment**: Hosted on Vercel, leveraging the global edge network to optimize rendering time for the dashboard and Swagger.
-- **Backend Deployment**: Hosted on Render as a Python-based Web Service. The internal async processing takes advantage of FastAPI's asynchronous concurrency model.
-- **Environment Variables**: Centralized production credentials storage in Render/Vercel (protecting the Supabase connection token and `GEMINI_API_KEY`).
-
-### Monitoring & Metrics (Observability)
-- **AI Performance Metrics**: Systematic monitoring of Gemini generation latency time and token consumption per analysis call.
-- **Post-AI Automatic Validation**: Implementation of a schema validation block (`Try/Catch`) in the backend. If the JSON returned by the model fails OpenAPI compliance validation, the error is structured in logs, and the Job status is marked as `FAILED` with debug details, preventing broken data from reaching the UI.
