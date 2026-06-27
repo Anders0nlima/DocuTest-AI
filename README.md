@@ -1,10 +1,10 @@
-# 🚀 DocuTest AI
+# DocuTest AI
 
 **DocuTest AI** is an intelligent platform where developers can upload source code files from their backends (FastAPI, Express, or Flask). The AI engine analyzes the code structure, extracts data contracts, generates official OpenAPI specifications, and creates automated test scripts focused on functional coverage and DevSecOps validation.
 
 ---
 
-## 🧠 Architecture Overview
+## Architecture Overview
 
 **DocuTest AI** operates with a modern, decoupled architecture:
 
@@ -40,7 +40,7 @@ graph TD
 
 ---
 
-## ⚙️ Local Setup Instructions
+## Local Setup Instructions
 
 This project is fully containerized and configured for local execution. Follow these steps to run it on your machine.
 
@@ -107,7 +107,7 @@ The frontend will be live at `http://localhost:5173`.
 
 ---
 
-## 🛡️ Learning Notes for Technical Interviews
+## Learning Notes for Technical Interviews
 
 If you are showcasing this project in an interview, make sure to highlight the following technical decisions:
 
